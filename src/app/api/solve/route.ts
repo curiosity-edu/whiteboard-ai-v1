@@ -2,40 +2,55 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
+// Configure the runtime environment for the API route
 export const runtime = "nodejs";
-const MODEL = "gpt-4o"; // vision-capable
+// Specify the OpenAI model to use (GPT-4 with vision capabilities)
+const MODEL = "gpt-4o";
 
+/**
+ * Helper function to create a JSON response with a specific status code
+ * @param status - HTTP status code
+ * @param data - Response data to be sent as JSON
+ * @returns NextResponse with the provided status and data
+ */
 function json(status: number, data: unknown) {
   return NextResponse.json(data, { status });
 }
 
+/**
+ * POST handler for the /api/solve endpoint
+ * Processes an image containing a math problem and returns an AI-generated solution
+ */
 export async function POST(req: NextRequest) {
   try {
+    // Verify API key is configured
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return json(500, { error: "OPENAI_API_KEY missing." });
 
+    // Parse the form data containing the image
     const form = await req.formData();
     const file = form.get("image");
+    
+    // Validate the uploaded file
     if (!(file instanceof File)) return json(400, { error: "No 'image' file in form-data." });
     if (!file.type.startsWith("image/")) return json(400, { error: `Invalid type: ${file.type}` });
 
+    // Read the file content
     const arr = await file.arrayBuffer();
     if (arr.byteLength === 0) return json(400, { error: "Empty image." });
 
+    // Convert the image to a data URL for the OpenAI API
     const dataUrl = `data:${file.type};base64,${Buffer.from(arr).toString("base64")}`;
+    
+    // Initialize the OpenAI client
     const client = new OpenAI({ apiKey });
 
-    // Decide style from the image text:
-    // - If the prompt explicitly asks to "explain", "why", "show work/steps", "derive/prove/justify",
-    //   produce a natural, concise explanation (result first, then 2–4 short sentences).
-    // - Otherwise, produce a work-only solution: a sequence of algebraic steps, one per line,
-    //   with minimal labels (<= 6 words) and no extra prose.
-    //
-    // Always return ONLY valid JSON: { "message": "<final response text>" }
+    // Send the image to OpenAI for processing
+    // The system prompt instructs the AI on how to format its response
     const rsp = await client.chat.completions.create({
       model: MODEL,
-      temperature: 0.2,
-      response_format: { type: "json_object" } as any,
+      temperature: 0.2, // Lower temperature for more deterministic responses
+      response_format: { type: "json_object" } as any, // Force JSON response format
       messages: [
         {
           role: "system",
@@ -65,26 +80,38 @@ export async function POST(req: NextRequest) {
       ],
     });
 
+    // Extract the AI's response
     const raw = rsp.choices?.[0]?.message?.content?.trim() || "{}";
 
+    // Parse the JSON response from the AI
     let parsed: any = {};
     try {
       parsed = JSON.parse(raw);
     } catch {
+      // If parsing fails but we have content, wrap it as the message
       if (!raw) return json(502, { error: "Model returned no content." });
-      // Fallback: wrap non-JSON as the message.
       return json(200, { message: raw });
     }
 
+    // Extract and clean the main message
     const message = (parsed?.message ?? "").toString().trim();
 
-    // Optional: legacy passthroughs if the model ever includes them.
+    // Extract any additional fields that might be present in the response
+    // These are included for backward compatibility with different response formats
     const answerPlain = (parsed?.answer_plain ?? "").toString().trim();
     const answerLatex = (parsed?.answer_latex ?? "").toString().trim();
     const explanation = (parsed?.explanation ?? "").toString().trim();
 
-    return json(200, { message, answerPlain, answerLatex, explanation });
+    // Return the structured response
+    return json(200, { 
+      message, 
+      answerPlain, 
+      answerLatex, 
+      explanation 
+    });
+    
   } catch (err: any) {
+    // Handle any errors that occur during processing
     const message =
       err?.response?.data?.error?.message || err?.message || "Unknown server error.";
     console.error("solve route error:", err);
