@@ -1,6 +1,8 @@
 // src/app/api/solve/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import fs from "fs/promises";
+import path from "path";
 
 // Configure the runtime environment for the API route
 export const runtime = "nodejs";
@@ -15,6 +17,32 @@ const MODEL = "gpt-4o";
  */
 function json(status: number, data: unknown) {
   return NextResponse.json(data, { status });
+}
+
+// File path for persisted conversation history
+const HISTORY_FILE = path.join(process.cwd(), "data", "solve_history.json");
+
+type HistoryItem = { question: string; response: string; ts: number };
+
+async function ensureHistoryDir() {
+  await fs.mkdir(path.dirname(HISTORY_FILE), { recursive: true });
+}
+
+async function readHistory(): Promise<HistoryItem[]> {
+  try {
+    await ensureHistoryDir();
+    const buf = await fs.readFile(HISTORY_FILE, "utf8");
+    const data = JSON.parse(buf);
+    if (Array.isArray(data)) return data as HistoryItem[];
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeHistory(items: HistoryItem[]) {
+  await ensureHistoryDir();
+  await fs.writeFile(HISTORY_FILE, JSON.stringify(items, null, 2), "utf8");
 }
 
 /**
@@ -42,6 +70,10 @@ export async function POST(req: NextRequest) {
     // Convert the image to a data URL for the OpenAI API
     const dataUrl = `data:${file.type};base64,${Buffer.from(arr).toString("base64")}`;
     
+    // Read prior conversation history and stringify for context
+    const history = await readHistory();
+    const historyString = JSON.stringify(history);
+
     // Initialize the OpenAI client
     const client = new OpenAI({ apiKey });
 
@@ -63,7 +95,8 @@ export async function POST(req: NextRequest) {
             "  No paragraphs, no extra commentary. Finish with the final answer on the last line.\n" +
             "Prefer plain text math like 2x^2 + 7x + 5 = 0; use LaTeX fragments only when clearer.\n" +
             "Keep within ~120 words unless the image explicitly asks for detailed explanation.\n" +
-            'Return ONLY valid JSON of the form: { "message": "<final response text>" }.',
+            "You will be given prior conversation history as a JSON array of items {question, response}. Use it only as context; do not repeat it.\n" +
+            "Return ONLY valid JSON of the form: { \"message\": \"<final response text>\", \"question_text\": \"<your best transcription of the question from the image>\" }.",
         },
         {
           role: "user",
@@ -71,8 +104,9 @@ export async function POST(req: NextRequest) {
             {
               type: "text",
               text:
-                "Read the math in this image and respond using the rules above. " +
-                'Return ONLY JSON: { "message": "<final response text>" }',
+                "Here is the prior history as JSON. Use it as context: " + historyString +
+                "\nNow read the math in this image and respond using the rules above. " +
+                "Return ONLY JSON: { \"message\": \"<final response text>\", \"question_text\": \"<transcribed question text>\" }",
             },
             { type: "image_url", image_url: { url: dataUrl } } as any,
           ],
@@ -95,12 +129,26 @@ export async function POST(req: NextRequest) {
 
     // Extract and clean the main message
     const message = (parsed?.message ?? "").toString().trim();
+    const questionText = (parsed?.question_text ?? "").toString().trim();
 
     // Extract any additional fields that might be present in the response
     // These are included for backward compatibility with different response formats
     const answerPlain = (parsed?.answer_plain ?? "").toString().trim();
     const answerLatex = (parsed?.answer_latex ?? "").toString().trim();
     const explanation = (parsed?.explanation ?? "").toString().trim();
+
+    // Persist history with new entry (append in order)
+    try {
+      const newHistory: HistoryItem[] = history.concat({
+        question: questionText,
+        response: message,
+        ts: Date.now(),
+      });
+      await writeHistory(newHistory);
+    } catch (e) {
+      console.error("failed to write solve history:", e);
+      // do not fail the request if history persistence fails
+    }
 
     // Return the structured response
     return json(200, { 

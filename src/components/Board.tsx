@@ -14,6 +14,23 @@ export default function Board() {
   // Loading state for the AI request
   const [loading, setLoading] = React.useState(false);
 
+  // AI panel state: list of responses shown as notifications
+  type AIItem = { id: string; text: string; ts: number };
+  const [aiItems, setAiItems] = React.useState<AIItem[]>([]);
+
+  function addAIItem(text: string) {
+    const item: AIItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text,
+      ts: Date.now(),
+    };
+    setAiItems((prev) => [item, ...prev]);
+  }
+
+  function removeAIItem(id: string) {
+    setAiItems((prev) => prev.filter((x) => x.id !== id));
+  }
+
   /**
    * Callback when the Tldraw editor mounts
    * @param editor - The Tldraw editor instance
@@ -29,24 +46,18 @@ export default function Board() {
 
   /**
    * Calculates the bounding box that contains all specified shapes
-   * @param editor - The Tldraw editor instance
-   * @param ids - Array of shape IDs to calculate bounds for
-   * @returns Bounding box information or null if no valid bounds could be calculated
    */
   function getUnionBounds(editor: any, ids: TLShapeId[]) {
-    // Initialize bounds with extreme values
     let minX = Infinity,
       minY = Infinity,
       maxX = -Infinity,
       maxY = -Infinity;
 
-    // Calculate the union of all shape bounds
     for (const id of ids) {
       const b =
         editor.getShapePageBounds?.(id) ?? editor.getPageBounds?.(id) ?? null;
       if (!b) continue;
 
-      // Handle different possible bounding box formats
       const x = b.x ?? b.minX ?? 0;
       const y = b.y ?? b.minY ?? 0;
       const w =
@@ -58,23 +69,15 @@ export default function Board() {
         b.height ??
         (b.maxY != null && b.minY != null ? b.maxY - b.minY : 0);
 
-      // Update the overall bounds
       if (x < minX) minX = x;
       if (y < minY) minY = y;
       if (x + w > maxX) maxX = x + w;
       if (y + h > maxY) maxY = y + h;
     }
 
-    // Return null if no valid bounds were found
-    if (
-      !isFinite(minX) ||
-      !isFinite(minY) ||
-      !isFinite(maxX) ||
-      !isFinite(maxY)
-    )
+    if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY))
       return null;
 
-    // Return the calculated bounds with additional convenience properties
     return {
       minX,
       minY,
@@ -146,7 +149,6 @@ export default function Board() {
       // Format the response text
       let finalText = (raw?.message ?? "").toString().trim();
       if (!finalText) {
-        // Fallback to alternative response fields if message is empty
         const answerPlain = (raw?.answerPlain ?? "").trim();
         const answerLatex = (raw?.answerLatex ?? "").trim();
         const explanation = (raw?.explanation ?? "").trim();
@@ -154,7 +156,10 @@ export default function Board() {
         if (explanation) finalText = `${finalText}\n\n${explanation}`;
       }
 
-      // Calculate position for the response text
+      // Add to AI panel (notifications list)
+      addAIItem(finalText);
+
+      // Calculate position for the response text (keep existing functionality)
       const b = getUnionBounds(editor, shapeIds);
       let x: number, y: number;
       if (b) {
@@ -168,7 +173,7 @@ export default function Board() {
         y = p.y;
       }
 
-      // Create a text shape with the AI response
+      // Create a text shape with the AI response on the canvas
       editor.createShape<TLTextShape>({
         type: "text",
         x,
@@ -188,33 +193,77 @@ export default function Board() {
   }, []);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
-      {/* AI Button */}
-      <div
-        style={{
-          position: "absolute",
-          right: 170,
-          top: 8,
-          zIndex: 20,
-          pointerEvents: "all",
-        }}
-      >
-        <button
-          onClick={askAI}
-          disabled={loading}
-          className="rounded-xl border border-black px-4 py-2 bg-white text-black shadow"
-          title="Export board and ask AI"
-        >
-          {loading ? "Thinking…" : "Ask AI"}
-        </button>
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Canvas area (left 3/4) */}
+      <div className="relative flex-1 min-w-0">
+        <Tldraw onMount={onMount} persistenceKey={undefined} autoFocus />
       </div>
 
-      {/* Tldraw Editor */}
-      <Tldraw
-        onMount={onMount}
-        persistenceKey={undefined} // Disable local persistence
-        autoFocus
-      />
+      {/* AI Panel (right 1/4) */}
+      <aside
+        className="w-1/4 min-w-[320px] max-w-[520px] h-full border-l border-neutral-200 bg-white flex flex-col"
+        style={{ pointerEvents: "auto" }}
+        aria-label="AI Panel"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 bg-neutral-50">
+          <div className="text-sm font-semibold text-neutral-700 select-none">
+            AI
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={askAI}
+              disabled={loading}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 bg-white text-neutral-800 shadow-sm text-sm hover:bg-neutral-100 disabled:opacity-50"
+              title="Export board and ask AI"
+            >
+              {loading ? "Thinking…" : "Ask AI"}
+            </button>
+            {aiItems.length > 0 && (
+              <button
+                onClick={() => setAiItems([])}
+                className="text-xs text-neutral-500 hover:text-neutral-700"
+                title="Clear all"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content list (notifications). Read-only: no inputs and selection disabled */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 select-none">
+          {aiItems.length === 0 ? (
+            <div className="text-xs text-neutral-500 mt-2">
+              Responses will appear here.
+            </div>
+          ) : (
+            aiItems.map((item) => (
+              <div
+                key={item.id}
+                className="relative rounded-lg border border-neutral-200 bg-white shadow-sm p-3 pr-8"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="text-xs text-neutral-400 mb-1">
+                  {new Date(item.ts).toLocaleTimeString()}
+                </div>
+                <div className="whitespace-pre-wrap text-sm text-neutral-900">
+                  {item.text}
+                </div>
+                <button
+                  onClick={() => removeAIItem(item.id)}
+                  className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-700"
+                  title="Dismiss"
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
     </div>
   );
 }
