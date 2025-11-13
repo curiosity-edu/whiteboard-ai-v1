@@ -1,0 +1,30 @@
+{
+  "sessions": [
+    {
+      "id": "1763065042723-pgvm3g0t",
+      "title": "Differentiation Test",
+      "createdAt": 1763065055146,
+      "updatedAt": 1763065059197,
+      "items": [
+        {
+          "question": "Differentiate f(x) = x^2 - sec(x).",
+          "response": "f(x) = x^2 - sec(x)\n\nf'(x) = d/dx (x^2) - d/dx (sec(x))\n\nf'(x) = 2x - sec(x)tan(x)\n\nThe derivative is 2x - sec(x)tan(x).",
+          "ts": 1763065059197
+        }
+      ]
+    },
+    {
+      "id": "1763064389146-h7lw5ubb",
+      "title": "Differentiation Task",
+      "createdAt": 1763064466547,
+      "updatedAt": 1763064472254,
+      "items": [
+        {
+          "question": "Differentiate f(x) = x^2 - sec(x).",
+          "response": "f(x) = x^2 - \\sec(x) \\\\\nf'(x) = \\frac{d}{dx}(x^2) - \\frac{d}{dx}(\\sec(x)) \\\\\nf'(x) = 2x - \\sec(x)\\tan(x) \\\\\n\\text{Final Answer: } f'(x) = 2x - \\sec(x)\\tan(x)",
+          "ts": 1763064472254
+        }
+      ]
+    }
+  ]
+}
