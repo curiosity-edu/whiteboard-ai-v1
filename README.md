@@ -68,6 +68,7 @@ Response format policy:
 - Keep the output readable as normal text
 - Keep within ~120 words unless the image explicitly asks for detailed explanation
 - Use prior conversation history (provided as JSON) only as context; do not repeat it
+```
 
 ## Program Flow
 
@@ -98,10 +99,7 @@ Response format policy:
 ### 4. AI Processing (OpenAI API)
 - Analyzes the image using vision capabilities
 - Processes any text in the image
-- Generates a response following the format guidelines:
-  - Uses Unicode for mathematical notation (e.g., x², √3, ¼)
-  - Structures response based on whether explanation is requested
-  - Returns a JSON object with `message` and `question_text`
+- Generates a response following the format guidelines (see prompting rules)
 
 ### 5. Response Handling
 - Server receives and validates the AI response
