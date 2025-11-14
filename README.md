@@ -129,11 +129,12 @@ Return ONLY JSON with the keys described above.
   - Adds a new notification card with the response
   - Formats the response with proper math notation
   - Updates the session title if this is the first message
-- Creates a text shape on the canvas:
+- Conditionally creates a text shape on the canvas if "Add to Canvas" is enabled:
   - Positions it near the original selection
   - Applies appropriate styling for AI responses
   - Makes it selectable and movable
 - Updates the history panel with the new interaction
+- Toggle state for "Add to Canvas" is persisted in localStorage
 
 ### 7. History Management
 - Sessions list view (`GET /api/history`):
@@ -158,6 +159,7 @@ Return ONLY JSON with the keys described above.
 - Panel is the right quarter of the screen. Notifications are dismissible cards.
 - History overlay is a full-height overlay over the panel. Message bubbles are styled like a chat: question right, answer left.
 - The canvas text created by answers uses `toRichText(finalText)` with a fixed width for readability.
+- The "Add to Canvas" toggle in the AI panel header allows users to control whether responses appear on the canvas.
 
 ## Development Tips
 
@@ -167,5 +169,6 @@ Return ONLY JSON with the keys described above.
 
 ## Future Enhancements (Next Action Items)
 
-- The screenshot of the selection should only include the user's new question, not the entire canvas (previous questions can be derived from conversation history).
-- Add a checkbox "Add to Canvas" in the AI Panel to allow the user to select whether they want the model response to appear in the canvas in addition to the AI Response tab. Only if it is selected, the answer positioning functionality will be used to add the AI response to the whiteboard as it currently does.
+- Switch from localhost to using curiosity-edu.org website domain (publishing site)
+- Add Google authentication and establish Firebase schema for personalized user history
+- The screenshot of the selection should only include the user's new question, not the entire canvas (previous questions can be derived from conversation history)
