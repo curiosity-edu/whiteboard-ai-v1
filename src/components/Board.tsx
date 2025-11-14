@@ -35,6 +35,21 @@ export default function Board() {
   const [sessionTitle, setSessionTitle] = React.useState<string>("");
   const historyScrollRef = React.useRef<HTMLDivElement | null>(null);
 
+  // Whether to add AI responses to the canvas as a text shape
+  const [addToCanvas, setAddToCanvas] = React.useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem("addToCanvas");
+      return v ? v === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("addToCanvas", String(addToCanvas));
+    } catch {}
+  }, [addToCanvas]);
+
   function addAIItem(text: string, question?: string) {
     const item: AIItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -107,7 +122,7 @@ export default function Board() {
       editor.updateInstanceState({ isReadonly: false });
     } catch {}
     console.log("[Board] Editor mounted:", editor);
-  }, []);
+  }, [addToCanvas]);
 
   /**
    * Calculates the bounding box that contains all specified shapes
@@ -226,31 +241,33 @@ export default function Board() {
       const questionText = (raw?.questionText ?? "").toString().trim();
       addAIItem(finalText, questionText);
 
-      // Calculate position for the response text (keep existing functionality)
-      const b = getUnionBounds(editor, shapeIds);
-      let x: number, y: number;
-      if (b) {
-        // Position below the selected area
-        x = b.minX;
-        y = b.maxY + 40;
-      } else {
-        // Fallback to viewport center if bounds can't be calculated
-        const p = editor.screenToPage(editor.getViewportScreenCenter());
-        x = p.x;
-        y = p.y;
-      }
+      // Optionally create a text shape with the AI response on the canvas
+      if (addToCanvas) {
+        // Calculate position for the response text (keep existing functionality)
+        const b = getUnionBounds(editor, shapeIds);
+        let x: number, y: number;
+        if (b) {
+          // Position below the selected area
+          x = b.minX;
+          y = b.maxY + 40;
+        } else {
+          // Fallback to viewport center if bounds can't be calculated
+          const p = editor.screenToPage(editor.getViewportScreenCenter());
+          x = p.x;
+          y = p.y;
+        }
 
-      // Create a text shape with the AI response on the canvas
-      editor.createShape<TLTextShape>({
-        type: "text",
-        x,
-        y,
-        props: {
-          richText: toRichText(finalText),
-          autoSize: false,
-          w: 400,
-        },
-      });
+        editor.createShape<TLTextShape>({
+          type: "text",
+          x,
+          y,
+          props: {
+            richText: toRichText(finalText),
+            autoSize: false,
+            w: 400,
+          },
+        });
+      }
     } catch (err) {
       console.error("[AskAI] Error:", err);
       alert(String(err instanceof Error ? err.message : err));
@@ -277,7 +294,16 @@ export default function Board() {
           <div className="text-sm font-semibold text-neutral-700 select-none">
             AI
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1 text-xs text-neutral-700" title="Also place the AI response onto the canvas">
+              <input
+                type="checkbox"
+                className="accent-blue-600"
+                checked={addToCanvas}
+                onChange={(e) => setAddToCanvas(e.target.checked)}
+              />
+              Add to Canvas
+            </label>
             <button
               onClick={openHistory}
               className="rounded-lg border border-neutral-300 px-3 py-1.5 bg-white text-neutral-800 shadow-sm text-sm hover:bg-neutral-100"
