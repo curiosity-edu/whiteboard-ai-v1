@@ -7,7 +7,7 @@ import Board from "@/components/Board";
  */
 export default function Page() {
   return (
-    <main className="h-screen w-screen overflow-hidden">
+    <main className="h-[calc(100vh-3.5rem)] w-full overflow-hidden">
       {/* The Board component contains the interactive whiteboard with AI capabilities */}
       <Board />
     </main>

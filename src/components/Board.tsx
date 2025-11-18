@@ -270,7 +270,6 @@ export default function Board() {
       console.log("Right before check for addToCanvas: ", shouldAddToCanvas);
       // Optionally create a text shape with the AI response on the canvas
       if (shouldAddToCanvas) {
-
         console.log("[Board] Adding AI response to canvas:", finalText);
         // Calculate position for the response text
         const b = getUnionBounds(editor, shapeIds);
@@ -306,22 +305,24 @@ export default function Board() {
   }, [addToCanvas]); // Fixed: added addToCanvas to dependencies
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="flex h-full w-full min-h-0 overflow-hidden bg-white">
       {/* Canvas area (left 3/4) */}
-      <div className="relative flex-1 min-w-0">
-        <Tldraw onMount={onMount} persistenceKey={undefined} autoFocus />
+      <div className="relative flex-1 min-w-0 min-h-0 overflow-hidden">
+        <div className="absolute inset-0 bg-white">
+          <Tldraw onMount={onMount} persistenceKey={undefined} autoFocus />
+        </div>
       </div>
 
       {/* AI Panel (right 1/4) */}
       <aside
-        className="relative w-1/4 min-w-[320px] max-w-[520px] h-full border-l border-neutral-200 bg-white flex flex-col"
+        className="relative w-1/4 min-w-[320px] max-w-[520px] h-full min-h-0 border-l border-neutral-200 bg-white flex flex-col"
         style={{ pointerEvents: "auto" }}
         aria-label="AI Panel"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 bg-neutral-50">
           <div className="text-sm font-semibold text-neutral-700 select-none">
-            AI
+            AI Panel
           </div>
           <div className="flex items-center gap-3">
             <label
@@ -398,9 +399,9 @@ export default function Board() {
 
         {/* Archive overlay */}
         {historyOpen && (
-          <div className="absolute inset-0 bg-white/85 backdrop-blur-sm flex flex-col">
+          <div className="absolute inset-0 bg-white flex flex-col">
             {/* History header */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 bg-white/90">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 bg-white">
               <div className="text-sm font-semibold text-neutral-700">
                 History
               </div>

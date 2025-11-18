@@ -1,0 +1,33 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+export default function Nav() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  const isAbout = pathname?.startsWith("/about");
+
+  const linkBase = "text-base";
+  const active = "font-bold text-neutral-900";
+  const inactive = "text-neutral-700 hover:text-neutral-900";
+
+  return (
+    <div className="flex items-center gap-4">
+      <Link
+        href="/"
+        className={`${linkBase} ${isHome ? active : inactive}`}
+        aria-current={isHome ? "page" : undefined}
+      >
+        Whiteboard
+      </Link>
+      <Link
+        href="/about"
+        className={`${linkBase} ${isAbout ? active : inactive}`}
+        aria-current={isAbout ? "page" : undefined}
+      >
+        About Us
+      </Link>
+    </div>
+  );
+}

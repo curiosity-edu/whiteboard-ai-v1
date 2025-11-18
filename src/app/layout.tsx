@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
+import Nav from "@/components/Nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,11 +26,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-white">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}
       >
-        {children}
+        <header className="border-b border-neutral-200 bg-white sticky top-0 z-50 h-14 shadow-sm">
+          <nav className="mx-auto max-w-6xl px-3 h-full flex items-center gap-2">
+            <Link
+              href="/"
+              aria-label="Curiosity Home"
+              className="flex items-center"
+            >
+              <img
+                src="/textblack.png"
+                alt="Curiosity-edu"
+                className="h-11 w-auto"
+              />
+            </Link>
+            <Nav />
+            <div className="flex-1" />
+          </nav>
+        </header>
+        <main className="w-full bg-white overscroll-y-contain">{children}</main>
       </body>
     </html>
   );
