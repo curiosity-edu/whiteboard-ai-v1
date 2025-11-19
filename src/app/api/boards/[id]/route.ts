@@ -31,8 +31,8 @@ function toBoards(shape: StoreShape): Board[] {
   return [];
 }
 
-export async function GET(_req: NextRequest, ctx: { params: { id: string } }) {
-  const { id } = ctx.params || {} as any;
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
   const shape = await readStore();
   const boards = toBoards(shape);
