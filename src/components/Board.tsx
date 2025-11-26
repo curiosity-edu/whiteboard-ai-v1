@@ -30,6 +30,9 @@ export default function Board({ boardId }: { boardId: string }) {
   const [archive, setArchive] = React.useState<HistoryItem[] | null>(null);
   const historyScrollRef = React.useRef<HTMLDivElement | null>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const recognitionRef = React.useRef<any | null>(null);
+  const interimRef = React.useRef<string>("");
+  const [isRecording, setIsRecording] = React.useState(false);
 
   // Whether to add AI responses to the canvas as a text shape
   const [addToCanvas, setAddToCanvas] = React.useState<boolean>(() => {
@@ -171,117 +174,198 @@ export default function Board({ boardId }: { boardId: string }) {
   /**
    * Captures the current board content, sends it to the AI, and displays the response
    */
-  const askAI = React.useCallback(async () => {
-    const editor = editorRef.current;
-    if (!editor) {
-      alert("Editor not ready yet.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Get selected shapes or all shapes if none selected
-      const selection = Array.from(editor.getSelectedShapeIds?.() ?? []);
-      const all = Array.from(editor.getCurrentPageShapeIds?.() ?? []);
-      const shapeIds: TLShapeId[] = selection.length > 0 ? selection : all;
-
-      if (shapeIds.length === 0) {
-        alert("Draw or select the problem first.");
+  const askAI = React.useCallback(
+    async (questionFromVoice?: string) => {
+      const editor = editorRef.current;
+      if (!editor) {
+        alert("Editor not ready yet.");
         return;
       }
 
-      // Export the selected area as an image
-      const scale = Math.max(2, Math.ceil(window.devicePixelRatio || 1));
-      const { blob } = await editor.toImage(shapeIds, {
-        format: "png",
-        background: true,
-        padding: 24,
-        scale,
-      });
-
-      if (!blob) {
-        alert("Failed to export image.");
-        return;
-      }
-
-      // Prepare the image for sending to the API
-      const fd = new FormData();
-      fd.append("image", new File([blob], "board.png", { type: "image/png" }));
-      if (boardId) fd.append("boardId", boardId);
-
-      // Send the image to the solve API
-      const res = await fetch("/api/solve", { method: "POST", body: fd });
-      if (!res.ok) {
-        let msg = `Solve failed (${res.status})`;
-        try {
-          const j = await res.json();
-          if (j?.error) msg += ` — ${j.error}`;
-        } catch {}
-        throw new Error(msg);
-      }
-
-      // Process the API response
-      const raw = await res.json();
-      console.log("[/api/solve] payload:", raw);
-
-      // Format the response text
-      let finalText = (raw?.message ?? "").toString().trim();
-      if (!finalText) {
-        const answerPlain = (raw?.answerPlain ?? "").trim();
-        const answerLatex = (raw?.answerLatex ?? "").trim();
-        const explanation = (raw?.explanation ?? "").trim();
-        finalText = answerPlain || answerLatex || "Could not read.";
-        if (explanation) finalText = `${finalText}\n\n${explanation}`;
-      }
-
-      // Add to AI panel (notifications list)
-      const questionText = (raw?.questionText ?? "").toString().trim();
-      addAIItem(finalText, questionText);
-
-      // Read the current value of addToCanvas from localStorage to ensure we have the latest value
-      console.log("here");
-      let shouldAddToCanvas = addToCanvas;
       try {
-        const stored = localStorage.getItem("addToCanvas");
-        shouldAddToCanvas = stored ? stored === "true" : true;
-      } catch {}
-      console.log("Right before check for addToCanvas: ", shouldAddToCanvas);
-      // Optionally create a text shape with the AI response on the canvas
-      if (shouldAddToCanvas) {
-        console.log("[Board] Adding AI response to canvas:", finalText);
-        // Calculate position for the response text
-        const b = getUnionBounds(editor, shapeIds);
-        let x: number, y: number;
-        if (b) {
-          // Position below the selected area
-          x = b.minX;
-          y = b.maxY + 40;
-        } else {
-          // Fallback to viewport center if bounds can't be calculated
-          const p = editor.screenToPage(editor.getViewportScreenCenter());
-          x = p.x;
-          y = p.y;
+        setLoading(true);
+
+        // Get selected shapes or all shapes if none selected
+        const selection = Array.from(editor.getSelectedShapeIds?.() ?? []);
+        const all = Array.from(editor.getCurrentPageShapeIds?.() ?? []);
+        const shapeIds: TLShapeId[] = selection.length > 0 ? selection : all;
+
+        if (shapeIds.length === 0) {
+          alert("Draw or select the problem first.");
+          return;
         }
 
-        editor.createShape<TLTextShape>({
-          type: "text",
-          x,
-          y,
-          props: {
-            richText: toRichText(finalText),
-            autoSize: false,
-            w: 400,
-          },
+        // Export the selected area as an image
+        const scale = Math.max(2, Math.ceil(window.devicePixelRatio || 1));
+        const { blob } = await editor.toImage(shapeIds, {
+          format: "png",
+          background: true,
+          padding: 24,
+          scale,
         });
+
+        if (!blob) {
+          alert("Failed to export image.");
+          return;
+        }
+
+        // Prepare the image for sending to the API
+        const fd = new FormData();
+        fd.append(
+          "image",
+          new File([blob], "board.png", { type: "image/png" })
+        );
+        if (boardId) fd.append("boardId", boardId);
+        if (questionFromVoice && questionFromVoice.trim()) {
+          fd.append("question", questionFromVoice.trim());
+        }
+
+        // Send the image to the solve API
+        const res = await fetch("/api/solve", { method: "POST", body: fd });
+        if (!res.ok) {
+          let msg = `Solve failed (${res.status})`;
+          try {
+            const j = await res.json();
+            if (j?.error) msg += ` — ${j.error}`;
+          } catch {}
+          throw new Error(msg);
+        }
+
+        // Process the API response
+        const raw = await res.json();
+        console.log("[/api/solve] payload:", raw);
+
+        // Format the response text
+        let finalText = (raw?.message ?? "").toString().trim();
+        if (!finalText) {
+          const answerPlain = (raw?.answerPlain ?? "").trim();
+          const answerLatex = (raw?.answerLatex ?? "").trim();
+          const explanation = (raw?.explanation ?? "").trim();
+          finalText = answerPlain || answerLatex || "Could not read.";
+          if (explanation) finalText = `${finalText}\n\n${explanation}`;
+        }
+
+        // Add to AI panel (notifications list)
+        const questionText = (raw?.questionText ?? "").toString().trim();
+        addAIItem(finalText, questionText);
+
+        // Read the current value of addToCanvas from localStorage to ensure we have the latest value
+        console.log("here");
+        let shouldAddToCanvas = addToCanvas;
+        try {
+          const stored = localStorage.getItem("addToCanvas");
+          shouldAddToCanvas = stored ? stored === "true" : true;
+        } catch {}
+        console.log("Right before check for addToCanvas: ", shouldAddToCanvas);
+        // Optionally create a text shape with the AI response on the canvas
+        if (shouldAddToCanvas) {
+          console.log("[Board] Adding AI response to canvas:", finalText);
+          // Calculate position for the response text
+          const b = getUnionBounds(editor, shapeIds);
+          let x: number, y: number;
+          if (b) {
+            // Position below the selected area
+            x = b.minX;
+            y = b.maxY + 40;
+          } else {
+            // Fallback to viewport center if bounds can't be calculated
+            const p = editor.screenToPage(editor.getViewportScreenCenter());
+            x = p.x;
+            y = p.y;
+          }
+
+          editor.createShape<TLTextShape>({
+            type: "text",
+            x,
+            y,
+            props: {
+              richText: toRichText(finalText),
+              autoSize: false,
+              w: 400,
+            },
+          });
+        }
+      } catch (err) {
+        console.error("[AskAI] Error:", err);
+        alert(String(err instanceof Error ? err.message : err));
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("[AskAI] Error:", err);
-      alert(String(err instanceof Error ? err.message : err));
-    } finally {
-      setLoading(false);
+    },
+    [addToCanvas]
+  ); // Fixed: added addToCanvas to dependencies
+
+  // Voice input: start/stop recognition
+  function startVoiceInput() {
+    try {
+      const SR: any =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+      if (!SR) {
+        alert("Speech recognition is not supported in this browser.");
+        return;
+      }
+      const rec = new SR();
+      recognitionRef.current = rec;
+      interimRef.current = "";
+      let finalText = "";
+      rec.lang = "en-US";
+      rec.interimResults = true;
+      rec.continuous = false;
+      rec.onresult = (event: any) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) {
+            finalText += res[0].transcript + " ";
+          } else {
+            interim += res[0].transcript;
+          }
+        }
+        interimRef.current = interim;
+      };
+      rec.onerror = (e: any) => {
+        console.error("[Voice] error:", e);
+      };
+      rec.onend = () => {
+        setIsRecording(false);
+        const spoken = (finalText || interimRef.current).trim();
+        if (spoken) {
+          // Add the spoken question to the canvas like a note
+          addResponseToCanvas(spoken);
+          // Ask AI with the spoken question
+          askAI(spoken);
+        }
+      };
+      setIsRecording(true);
+      rec.start();
+    } catch (e) {
+      console.error("[Voice] start failed:", e);
+      setIsRecording(false);
     }
-  }, [addToCanvas]); // Fixed: added addToCanvas to dependencies
+  }
+
+  function stopVoiceInput() {
+    try {
+      const rec = recognitionRef.current;
+      if (rec && typeof rec.stop === "function") {
+        rec.stop();
+      }
+    } catch (e) {
+      console.error("[Voice] stop failed:", e);
+    } finally {
+      setIsRecording(false);
+    }
+  }
+
+  React.useEffect(() => {
+    return () => {
+      try {
+        const rec = recognitionRef.current;
+        if (rec && typeof rec.stop === "function") rec.stop();
+      } catch {}
+    };
+  }, []);
 
   return (
     <div className="flex h-full w-full min-h-0 overflow-hidden bg-white">
@@ -305,7 +389,7 @@ export default function Board({ boardId }: { boardId: string }) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={askAI}
+              onClick={() => askAI()}
               disabled={loading}
               className="rounded-md px-4 py-2.5 bg-blue-600 text-yellow-400 font-semibold shadow-sm text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
               title="Export board and ask AI"
@@ -410,6 +494,30 @@ export default function Board({ boardId }: { boardId: string }) {
               </div>
             ))
           )}
+        </div>
+
+        {/* Footer: Voice input */}
+        <div className="border-t border-neutral-200 px-3 py-2 bg-white flex items-center justify-between">
+          <div className="text-[11px] text-neutral-500 select-none">
+            Voice input
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={isRecording ? stopVoiceInput : startVoiceInput}
+              className={`rounded-full px-3 py-1.5 text-sm shadow-sm transition-colors ${
+                isRecording
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+              }`}
+              title={isRecording ? "Stop voice input" : "Start voice input"}
+              aria-pressed={isRecording}
+              aria-label={
+                isRecording ? "Stop voice input" : "Start voice input"
+              }
+            >
+              {isRecording ? "⏹️ Stop" : "🎤 Speak"}
+            </button>
+          </div>
         </div>
 
         {/* Archive overlay */}

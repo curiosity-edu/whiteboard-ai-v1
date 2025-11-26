@@ -4,7 +4,7 @@
       "id": "1763699983124-44s7hzla",
       "title": "Testing Reverted Commit",
       "createdAt": 1763699983124,
-      "updatedAt": 1764114705569,
+      "updatedAt": 1764119068606,
       "items": [
         {
           "question": "Explain on a high level how virtual memory works",
@@ -20,6 +20,31 @@
           "question": "Find the determinant of 1 2 3; 4 5 6; 7 8 9",
           "response": "Determinant = 1(5×9 - 6×8) - 2(4×9 - 6×7) + 3(4×8 - 5×7) \n= 1(45 - 48) - 2(36 - 42) + 3(32 - 35) \n= 1(-3) - 2(-6) + 3(-3) \n= -3 + 12 - 9 \n= 0",
           "ts": 1764114705569
+        },
+        {
+          "question": "what is 1 + 1",
+          "response": "1 + 1 = 2",
+          "ts": 1764118543091
+        },
+        {
+          "question": "Solve the equation x² + 2x - 8 = 0",
+          "response": "x² + 2x - 8 = 0\n\n(x + 4)(x - 2) = 0\n\nx + 4 = 0 or x - 2 = 0\n\nx = -4 or x = 2",
+          "ts": 1764118983541
+        },
+        {
+          "question": "",
+          "response": "",
+          "ts": 1764119027100
+        },
+        {
+          "question": "Solve the equation 3x - 7 = 11",
+          "response": "To solve the equation 3x - 7 = 11, follow these steps:\n\n3x - 7 = 11\n\nAdd 7 to both sides:\n3x = 18\n\nDivide both sides by 3:\nx = 6",
+          "ts": 1764119040002
+        },
+        {
+          "question": "how does dijkstra's algorithm work",
+          "response": "Dijkstra's algorithm finds the shortest path from a starting node to all other nodes in a weighted graph. It works by initializing the starting node's distance to zero and all others to infinity. It repeatedly selects the node with the smallest tentative distance, updates the distances of its neighbors, and marks it as visited. This process continues until all nodes are visited, ensuring the shortest path to each node is found. The algorithm is efficient for graphs with non-negative weights.",
+          "ts": 1764119068606
         }
       ]
     },
