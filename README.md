@@ -195,14 +195,14 @@ Return ONLY JSON with the keys described above.
 
 ### Deadline for Functionality Items: 12/14/2025
 
-### UI Related Tasks:
+#### UI Related Tasks:
 
 - AI Panel doesn't need to go all the way down (too much screen estate)
 - Stack alerts like WhatsApp messages
 - Write-out animation on whiteboard
 - Ask AI should be bigger and more colorful
 
-### Deadline for UI Items: End of break
+#### Deadline for UI Items: End of break
 
 #### Deployment:
 
