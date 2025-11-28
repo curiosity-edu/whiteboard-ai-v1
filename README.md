@@ -185,7 +185,7 @@ Return ONLY JSON with the keys described above.
 
 ### Curiosity Diaries (Meeting Recaps)
 
-[Curiosity Diaries] (https://docs.google.com/document/d/1PZVEnGbW0cBrpEe8pHxyukVcmj3-IsZpuk1y63arrgw/edit?tab=t.0)
+[Curiosity Diaries](https://drive.google.com/drive/folders/17Z9vFGqZ38VGecYGry0HLb0c6AFYhKCR?usp=sharing)
 
 ### Next Steps
 
