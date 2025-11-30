@@ -96,9 +96,12 @@ Return ONLY JSON with the keys described above.
 
 ### 0. Landing and Navigation
 
-- User lands at `GET /` → redirected to `GET /boards`.
-- `My Boards` page lists all boards from `GET /api/boards` with newest updated first.
-- User can click `New Board` → goes to `/boards/new`, enters a title, `POST /api/boards` creates a board, then redirects to `/board/[id]`.
+- User lands at `GET /` → a new board is created via `POST /api/boards`, and the user is redirected to `/board/[id]` to see a blank whiteboard immediately.
+- Top-right of the nav shows authentication controls:
+  - Logged out: "Sign in with Google"; `My Boards` link is hidden.
+  - Logged in: "Hello [FirstName] • Sign out"; `My Boards` link appears.
+- `My Boards` lists all boards from `GET /api/boards` with newest updated first.
+- Users can still create explicitly via `/boards/new`.
 
 ### 1. Board View (`/board/[id]`)
 
@@ -131,18 +134,27 @@ Return ONLY JSON with the keys described above.
 - Appends `{ question, response, ts }` to the specified board, updates `updatedAt`, and persists to file.
 - Returns `{ message, questionText, boardId, ... }` to the client.
 
-### 4. Client Update (Board)
+### 4. Authentication
+
+- **Provider/Context**: `src/context/AuthContext.js` (Client Component) exposes `[user, googleSignIn, logOut]` using Firebase Auth.
+- **UI Controls**: `src/components/AuthControls.tsx` (Client) renders in the header:
+  - Logged out: "Sign in with Google"; after success, navigates to `/boards`.
+  - Logged in: greeting + "Sign out".
+- **Nav behavior**: `src/components/Nav.tsx` shows `My Boards` only when a user is signed in.
+- **Firebase config**: `src/lib/firebase.ts` initializes app/auth/storage/firestore. Analytics is guarded with `typeof window !== "undefined"` to avoid SSR errors.
+
+### 5. Client Update (Board)
 
 - Shows the AI response in the AI Panel list (newest first).
 - If "Add to Canvas" is enabled, adds a TLDraw text shape below the selection with `toRichText(message)`.
 - History overlay can be opened to view the entire board conversation; reads `GET /api/boards/[id]`.
 
-### 5. Persistence
+### 6. Persistence
 
 - File-based store `data/solve_history.json` is read/written on each request.
 - In production, move to a real database (e.g., Firebase/Firestore) and associate boards to authenticated users.
 
-### 6. Error Handling
+### 7. Error Handling
 
 - Network errors: Shows user-friendly error message in the AI panel
 - API errors: Displays the error message from the server
@@ -152,7 +164,7 @@ Return ONLY JSON with the keys described above.
 ## Styling & UX Notes
 
 - **Header**: Sticky, solid white (`bg-white`) with full-bleed underline; left-aligned logo (`/public/textblack.png`) and nav links.
-- **Nav**: `My Boards` and `About Us`; active link is bold. `My Boards` highlights on `/boards` and `/board/*`.
+- **Nav**: Shows `My Boards` only when signed in; `About Us` always visible. Active link is bold. `My Boards` highlights on `/boards` and `/board/*`.
 - **Layout**: The window itself does not scroll; the canvas and AI panel scroll internally. Main height is `calc(100vh - header)`.
 - **Canvas**: TLDraw fills its container (`absolute inset-0 bg-white`). Bottom toolbar is always visible; no clipping (`min-h-0` on flex parents).
 - **AI Panel**: Right column with header actions (Ask AI, Add to Canvas, History). Content is a vertical stack of cards; History overlay is opaque white.
@@ -161,7 +173,9 @@ Return ONLY JSON with the keys described above.
 ## Source Files Overview
 
 - `src/app/layout.tsx` — Global layout (header with logo + `Nav`, sticky header, full-bleed underline, white background scaffolding).
-- `src/app/page.tsx` — Redirects `/` to `/boards`.
+- `src/app/page.tsx` — Creates a new board and redirects `/` to `/board/[id]`.
+- `src/components/AuthControls.tsx` — Client auth UI in header (Sign in with Google / Hello [name] / Sign out).
+- `src/context/AuthContext.js` — Client auth context exposing `[user, googleSignIn, logOut]`.
 - `src/app/boards/page.tsx` — Server component: lists boards via `GET /api/boards`, links to new and detail pages.
 - `src/app/boards/new/page.tsx` — Client page to create a new board (title input) and redirect to `/board/[id]`.
 - `src/app/board/[id]/page.tsx` — Server page that renders `<Board boardId={id} />`.
@@ -172,6 +186,7 @@ Return ONLY JSON with the keys described above.
 - `src/app/api/solve/route.ts` — Accepts `image` + `boardId`, calls OpenAI, appends `{question,response,ts}` to the board, persists to file.
 - `src/app/api/history/route.ts` — Legacy sessions endpoint (kept temporarily; UI no longer calls it).
 - `src/app/globals.css` — Tailwind setup and theme tokens. Forces light background to avoid dark strips; sets body text color.
+- `src/lib/firebase.ts` — Centralized Firebase initialization and exports (auth, storage, firestore, analytics guarded for SSR).
 - `public/textblack.png` — Logo used in the header and About page.
 
 ## Development Tips
@@ -184,14 +199,20 @@ Return ONLY JSON with the keys described above.
 
 ### Meeting Recaps: [Curiosity Diaries](https://drive.google.com/drive/folders/17Z9vFGqZ38VGecYGry0HLb0c6AFYhKCR?usp=sharing)
 
-### Next Steps
+### Next Task
 
-- Test the First Principles Prompting (Mode Detection) and improve as necessary
-- Iron out database structure for Firestore
-- Implement Google Authentication and write to a Users collection
+- Add event handlers that call Firebase functions that write to the Firestore
+- Ensure that Google SSO accurately writes to the Users collection and Board creation writes to the Boards collection
+
+### Clean Up Itemns
+- Turn the "My Boards" page into a collapsable sidebar like ChatGPT conversation history
+- Redirectuser back to blank whiteboard page when they sign out
+- Make the AI Panel collapsable and toggleable
+
+### Other Functionality Tasks
 - Fix voice input issues: should not add to whiteboard, should always be included in question transcription
-- "Ask AI" responses should match the size of user text
-- Create the ability to detect/highlight errors in user work
+- Create the ability to detect/highlight errors in user work (annotation)
+- “Ask AI" responses should match the size of user text
 
 ### Deadline for Functionality Items: 12/14/2025
 

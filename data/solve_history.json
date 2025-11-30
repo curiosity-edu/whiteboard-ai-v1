@@ -1,10 +1,59 @@
 {
   "boards": [
     {
+      "id": "1764528943432-q7vvif7m",
+      "title": "Untitled",
+      "createdAt": 1764528943432,
+      "updatedAt": 1764528943432,
+      "items": []
+    },
+    {
+      "id": "1764485661311-bihzgp4x",
+      "title": "Untitled",
+      "createdAt": 1764485661311,
+      "updatedAt": 1764485661311,
+      "items": []
+    },
+    {
+      "id": "1764485645457-bt03jfdk",
+      "title": "Untitled",
+      "createdAt": 1764485645457,
+      "updatedAt": 1764485645457,
+      "items": []
+    },
+    {
+      "id": "1764485495933-vibxszxr",
+      "title": "Untitled",
+      "createdAt": 1764485495933,
+      "updatedAt": 1764485495933,
+      "items": []
+    },
+    {
+      "id": "1764485461405-b7li8a00",
+      "title": "Untitled",
+      "createdAt": 1764485461405,
+      "updatedAt": 1764485461405,
+      "items": []
+    },
+    {
+      "id": "1764485459654-xdde5vjw",
+      "title": "Untitled",
+      "createdAt": 1764485459654,
+      "updatedAt": 1764485459654,
+      "items": []
+    },
+    {
+      "id": "1764485433738-kc2zaila",
+      "title": "Untitled",
+      "createdAt": 1764485433738,
+      "updatedAt": 1764485433738,
+      "items": []
+    },
+    {
       "id": "1763699983124-44s7hzla",
       "title": "Testing Reverted Commit",
       "createdAt": 1763699983124,
-      "updatedAt": 1764299017621,
+      "updatedAt": 1764483440197,
       "items": [
         {
           "question": "Explain on a high level how virtual memory works",
@@ -75,6 +124,11 @@
           "question": "x + 6x + 9 = 8\n\nx + 6x = -1\n\nWhat do I do from here? can you give me a hint please?\n\nwhat do I do from x + 6x = -1 though? how to solve from here?",
           "response": "To solve the equation, first combine like terms on the left side: x + 6x becomes 7x. So, the equation is 7x + 9 = 8.\n\nNext, subtract 9 from both sides to isolate the term with x. This will give you 7x = -1.\n\nFinally, divide both sides by 7 to solve for x.",
           "ts": 1764299017621
+        },
+        {
+          "question": "derive the quadratic formula",
+          "response": "To derive the quadratic formula, start with the standard form of a quadratic equation: ax² + bx + c = 0.\n\n1. Divide every term by a to simplify: x² + (b/a)x + c/a = 0.\n2. Move the constant term to the other side: x² + (b/a)x = -c/a.\n3. Complete the square by adding (b/2a)² to both sides: x² + (b/a)x + (b/2a)² = (b/2a)² - c/a.\n4. This forms a perfect square trinomial: (x + b/2a)² = (b² - 4ac)/4a².\n5. Take the square root of both sides: x + b/2a = ±√((b² - 4ac)/4a²).\n6. Solve for x: x = -b/2a ± √(b² - 4ac)/2a.\n\nThis gives the quadratic formula: x = [-b ± √(b² - 4ac)] / 2a.",
+          "ts": 1764483440197
         }
       ]
     },
