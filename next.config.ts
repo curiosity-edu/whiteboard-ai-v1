@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig = {
   eslint: {
@@ -12,7 +13,9 @@ const nextConfig = {
     // your project has type errors.
     // ignoreBuildErrors: true, // Only if you also have type errors
   },
-}
+  // Pin tracing root to this project directory to avoid monorepo/root mis-detection
+  outputFileTracingRoot: path.resolve(__dirname),
+} as NextConfig;
 
 
 export default nextConfig;
