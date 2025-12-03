@@ -22,5 +22,6 @@ export default async function Page() {
   const created = await createBoard();
   const id = created?.id as string | undefined;
   if (id) redirect(`/board/${id}`);
-  redirect("/boards/new");
+  // If board creation fails, stay on root (could render an error UI here)
+  redirect("/");
 }

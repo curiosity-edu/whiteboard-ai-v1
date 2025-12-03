@@ -12,16 +12,11 @@ export default function AuthControls() {
   const googleSignIn = ctx[1] as (() => Promise<void>) | undefined;
   const logOut = ctx[2] as (() => Promise<void>) | undefined;
 
-  function onSignIn() {
+  async function onSignIn() {
     try {
-      // Trigger popup immediately within the click event to avoid browser blocking
-      googleSignIn?.()
-        .then(() => {
-          if (pathname !== "/boards") router.push("/boards");
-        })
-        .catch((e) => {
-          console.error("Sign-in failed", e);
-        });
+      await googleSignIn?.();
+      // After successful login, go to root; it will create a new board and redirect
+      if (pathname !== "/") router.push("/");
     } catch (e) {
       console.error("Sign-in failed", e);
     }
@@ -46,7 +41,6 @@ export default function AuthControls() {
             <span className="text-sm text-neutral-700">Hello {firstName}</span>
           )}
           <button
-            type="button"
             onClick={onSignOut}
             className="px-3 py-1.5 text-sm font-medium text-neutral-700 bg-neutral-100 border border-neutral-300 rounded-md hover:bg-neutral-200"
           >
@@ -55,7 +49,6 @@ export default function AuthControls() {
         </>
       ) : (
         <button
-          type="button"
           onClick={onSignIn}
           className="px-3 py-1.5 text-sm font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800"
         >
