@@ -58,3 +58,30 @@ export async function DELETE(_req: NextRequest, context: { params: Promise<{ id:
   await writeStore({ boards: next });
   return new NextResponse(null, { status: 204 });
 }
+
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {}
+  const t = (body?.title ?? "").toString().trim();
+  if (!t) {
+    return NextResponse.json({ error: "Title is required." }, { status: 400 });
+  }
+  const shape = await readStore();
+  const boards = toBoards(shape);
+  const idx = boards.findIndex((b) => b.id === id);
+  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const now = Date.now();
+  const updated: Board = { ...boards[idx], title: t, updatedAt: now };
+  const next = boards.slice();
+  next[idx] = updated;
+  try {
+    await writeStore({ boards: next });
+  } catch (e) {
+    console.error("[Boards] writeStore failed during PATCH, continuing without persistence:", e);
+  }
+  return NextResponse.json({ id: updated.id, title: updated.title, createdAt: updated.createdAt, updatedAt: updated.updatedAt });
+}
