@@ -22,5 +22,5 @@ export default async function Page() {
   const created = await createBoard();
   const id = created?.id as string | undefined;
   if (id) redirect(`/board/${id}`);
-  redirect("/boards");
+  redirect("/boards/new");
 }

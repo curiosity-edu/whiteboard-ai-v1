@@ -17,5 +17,5 @@ export default async function BoardsPage() {
       }
     }
   } catch {}
-  return redirect("/");
+  return redirect("/boards/new");
 }
