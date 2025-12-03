@@ -402,7 +402,11 @@ export default function Board({ boardId }: { boardId: string }) {
       {/* Canvas area */}
       <div className="relative flex-1 min-w-0 min-h-0 overflow-hidden">
         <div className="absolute inset-0 bg-white">
-          <Tldraw onMount={onMount} persistenceKey={undefined} autoFocus />
+          <Tldraw
+            onMount={onMount}
+            persistenceKey={`board:${boardId || "default"}`}
+            autoFocus
+          />
         </div>
         {/* Right-edge sidebar toggle when AI panel is closed */}
         {!aiOpen && (
