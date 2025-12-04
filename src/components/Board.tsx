@@ -31,6 +31,7 @@ export default function Board({ boardId }: { boardId: string }) {
   const [archive, setArchive] = React.useState<HistoryItem[] | null>(null);
   const historyScrollRef = React.useRef<HTMLDivElement | null>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const settingsContainerRef = React.useRef<HTMLDivElement | null>(null);
   const recognitionRef = React.useRef<any | null>(null);
   const interimRef = React.useRef<string>("");
   const keepListeningRef = React.useRef<boolean>(false);
@@ -394,8 +395,24 @@ export default function Board({ boardId }: { boardId: string }) {
     };
   }, []);
 
+  // Close AI settings menu on outside click or Escape
+  React.useEffect(() => {
+    function onDocClick() {
+      setSettingsOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSettingsOpen(false);
+    }
+    window.addEventListener("click", onDocClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", onDocClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
   return (
-    <div className="flex h-full w-full min-h-0 overflow-hidden bg-white">
+    <div className="absolute inset-0 flex w-full min-h-0 overflow-hidden bg-white">
       {/* My Boards Sidebar (signed-in users only) */}
       <MyBoardsSidebar currentBoardId={boardId} />
 
@@ -426,7 +443,7 @@ export default function Board({ boardId }: { boardId: string }) {
       {/* AI Panel (right side) */}
       {aiOpen && (
         <aside
-          className="relative w-1/4 min-w-[320px] max-w-[520px] h-full min-h-0 border-l border-neutral-200 bg-white flex flex-col"
+          className="relative w-72 min-w-[288px] max-w-[360px] h-full min-h-0 border-l border-neutral-200 bg-white flex flex-col"
           style={{ pointerEvents: "auto" }}
           aria-label="AI Panel"
         >
@@ -446,15 +463,22 @@ export default function Board({ boardId }: { boardId: string }) {
               </button>
               <button
                 onClick={() => setAiOpen(false)}
-                className="p-1.5 text-xl text-neutral-500 hover:text-neutral-800"
-                title="Hide AI Panel"
-                aria-label="Hide AI Panel"
+                className="p-1.5 rounded-md hover:bg-neutral-50"
+                title="Collapse sidebar"
+                aria-label="Collapse sidebar"
               >
-                {">"}
+                <img src="/window.svg" alt="Collapse" className="h-5 w-5" />
               </button>
-              <div className="relative">
+              <div
+                className="relative"
+                ref={settingsContainerRef}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
-                  onClick={() => setSettingsOpen((v) => !v)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSettingsOpen((v) => !v);
+                  }}
                   className="p-1.5 text-2xl text-neutral-500 hover:text-neutral-800"
                   title="Settings"
                   aria-haspopup="menu"
@@ -467,6 +491,7 @@ export default function Board({ boardId }: { boardId: string }) {
                     role="menu"
                     aria-label="AI Panel settings"
                     className="absolute right-0 mt-2 w-56 rounded-lg border border-neutral-200 bg-white shadow-lg p-2 z-10"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <label
                       className="flex items-center gap-2 px-2 py-2 text-sm text-neutral-800 cursor-pointer"

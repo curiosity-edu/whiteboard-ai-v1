@@ -2,12 +2,28 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
-async function createBoard() {
+async function getBaseUrl() {
   const h = await headers();
   const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
   const proto = (h.get("x-forwarded-proto") ||
     (process.env.NODE_ENV !== "production" ? "http" : "https")) as string;
-  const base = `${proto}://${host}`;
+  return `${proto}://${host}`;
+}
+
+async function fetchBoards(): Promise<any[] | null> {
+  const base = await getBaseUrl();
+  try {
+    const rsp = await fetch(`${base}/api/boards`, { cache: "no-store" });
+    if (!rsp.ok) return null;
+    const j = await rsp.json();
+    return Array.isArray(j?.boards) ? j.boards : [];
+  } catch {
+    return null;
+  }
+}
+
+async function createBoard() {
+  const base = await getBaseUrl();
   const rsp = await fetch(`${base}/api/boards`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -19,15 +35,24 @@ async function createBoard() {
 }
 
 export default async function Page() {
+  // Load existing boards; if any, redirect to the most recent one (index 0)
+  const boards = await fetchBoards();
+  if (boards && boards.length > 0) {
+    const first = boards[0];
+    if (first?.id) redirect(`/board/${first.id}`);
+  }
+
+  // Only create a new board when the user has zero boards
   const created = await createBoard();
   const id = created?.id as string | undefined;
   if (id) redirect(`/board/${id}`);
-  // If board creation fails, render a simple retry UI to avoid redirect loops
+
+  // If both listing and creation fail, render a simple retry UI
   return (
     <main className="h-[calc(100vh-3.5rem)] w-full grid place-items-center bg-white">
       <div className="text-center">
         <h1 className="text-lg font-semibold text-neutral-900">
-          Couldn’t create a new board
+          We hit a snag
         </h1>
         <p className="text-sm text-neutral-600 mt-1">Please try again.</p>
         <form action="/" method="get" className="mt-3">

@@ -1,77 +1,17 @@
 {
   "boards": [
     {
-      "id": "1764803157106-yrjai6x7",
-      "title": "Untitled",
-      "createdAt": 1764803157106,
-      "updatedAt": 1764803157106,
-      "items": []
-    },
-    {
-      "id": "1764802792795-obwudc46",
-      "title": "Untitled",
-      "createdAt": 1764802792795,
-      "updatedAt": 1764802792795,
-      "items": []
-    },
-    {
-      "id": "1764802739891-mv5do9gv",
-      "title": "Untitled",
-      "createdAt": 1764802739891,
-      "updatedAt": 1764802739891,
-      "items": []
-    },
-    {
-      "id": "1764802736552-fgabwezk",
-      "title": "Untitled",
-      "createdAt": 1764802736552,
-      "updatedAt": 1764802736552,
-      "items": []
-    },
-    {
-      "id": "1764802711348-z92cbm5w",
-      "title": "Untitled",
-      "createdAt": 1764802711348,
-      "updatedAt": 1764802711348,
-      "items": []
-    },
-    {
-      "id": "1764801963948-5mgbcaf1",
-      "title": "Testing Add to Canvas Default Value",
-      "createdAt": 1764801963948,
-      "updatedAt": 1764802500765,
-      "items": [
-        {
-          "question": "Solve x^2 + 10x + 7 = 0",
-          "response": "To solve the quadratic equation x² + 10x + 7 = 0, you can use the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a. Here, a = 1, b = 10, and c = 7. Plug these values into the formula to find the solutions for x.",
-          "ts": 1764802471994
-        },
-        {
-          "question": "Explain the concept of eigenvectors",
-          "response": "Eigenvectors are special vectors associated with a square matrix. When a matrix acts on an eigenvector, the vector's direction remains unchanged, though it may be scaled by a factor called an eigenvalue. Mathematically, for a matrix A and an eigenvector v, the equation Av = λv holds, where λ is the eigenvalue. This concept is crucial in many fields, including physics and computer science, as it simplifies complex transformations by reducing them to scaling operations.",
-          "ts": 1764802500765
-        }
-      ]
-    },
-    {
-      "id": "1764801921248-dritjhff",
-      "title": "Untitled",
-      "createdAt": 1764801921248,
-      "updatedAt": 1764801921248,
-      "items": []
-    },
-    {
-      "id": "1764801086061-8ao9s1nd",
+      "id": "1764877048117-ug00epi1",
       "title": "Algebra Practice",
-      "createdAt": 1764801086061,
-      "updatedAt": 1764801086061,
+      "createdAt": 1764877048117,
+      "updatedAt": 1764877048117,
       "items": []
     },
     {
-      "id": "1764789644337-ssqmgvyk",
+      "id": "1764875420786-u6qqyvn6",
       "title": "Untitled",
-      "createdAt": 1764789644337,
-      "updatedAt": 1764789644337,
+      "createdAt": 1764875420786,
+      "updatedAt": 1764875420786,
       "items": []
     }
   ]

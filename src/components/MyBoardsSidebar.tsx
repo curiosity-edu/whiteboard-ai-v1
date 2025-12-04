@@ -11,7 +11,10 @@ export default function MyBoardsSidebar({
   currentBoardId?: string;
 }) {
   const router = useRouter();
-  const [user] = (UserAuth() as any) || [];
+  const ctx = (UserAuth() as any) || [];
+  const user = ctx[0];
+  const googleSignIn = ctx[1] as (() => Promise<void>) | undefined;
+  const logOut = ctx[2] as (() => Promise<void>) | undefined;
 
   const [open, setOpen] = React.useState<boolean>(() => {
     try {
@@ -33,6 +36,7 @@ export default function MyBoardsSidebar({
   const [menuOpenId, setMenuOpenId] = React.useState<string | null>(null);
   const [renamingId, setRenamingId] = React.useState<string | null>(null);
   const [tempTitle, setTempTitle] = React.useState<string>("");
+  const [profileOpen, setProfileOpen] = React.useState(false);
 
   React.useEffect(() => {
     let aborted = false;
@@ -61,6 +65,28 @@ export default function MyBoardsSidebar({
       aborted = true;
     };
   }, [user]);
+
+  // Close menus on outside click or Escape (including profile dropdown)
+  React.useEffect(() => {
+    function onDocClick() {
+      setMenuOpenId(null);
+      setRenamingId(null);
+      setProfileOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMenuOpenId(null);
+        setRenamingId(null);
+        setProfileOpen(false);
+      }
+    }
+    window.addEventListener("click", onDocClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("click", onDocClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   // Close menus on outside click or Escape
   React.useEffect(() => {
@@ -142,18 +168,119 @@ export default function MyBoardsSidebar({
     }
   }
 
-  if (!user) return null;
+  // Sidebar now renders for signed-out users as well, showing branding and a sign-in control at the bottom.
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed left-2 top-1/2 -translate-y-1/2 z-40 h-9 w-9 flex items-center justify-center rounded-md border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50"
-        title="Show Boards"
-        aria-label="Show Boards"
+      <aside
+        className="relative z-30 w-14 h-full min-h-0 border-r border-neutral-200 bg-white flex flex-col items-center justify-between"
+        aria-label="My Boards (collapsed)"
       >
-        {">"}
-      </button>
+        <div className="w-full flex flex-col items-center gap-3 pt-3">
+          <button
+            onClick={() => setOpen(true)}
+            className="p-2 rounded-md hover:bg-neutral-50"
+            aria-label="Expand sidebar"
+            title="Expand"
+          >
+            <img
+              src="/Asset%205.png"
+              alt="Curiosity"
+              className="h-7 w-7 object-contain"
+            />
+          </button>
+          <Link
+            href="/about"
+            className="p-2 rounded-md hover:bg-neutral-50"
+            aria-label="About Us"
+            title="About Us"
+          >
+            <img src="/globe.svg" alt="About" className="h-5 w-5" />
+          </Link>
+          {user ? (
+            <Link
+              href="/boards/new"
+              className="p-2 rounded-md hover:bg-neutral-50"
+              aria-label="New Board"
+              title="New Board"
+            >
+              <img src="/file.svg" alt="New" className="h-5 w-5" />
+            </Link>
+          ) : (
+            <button
+              onClick={async () => {
+                try {
+                  await googleSignIn?.();
+                } catch (e) {}
+              }}
+              className="p-2 rounded-md hover:bg-neutral-50"
+              aria-label="Sign in to create board"
+              title="Sign in"
+            >
+              <img src="/file.svg" alt="New" className="h-5 w-5 opacity-60" />
+            </button>
+          )}
+        </div>
+        <div className="w-full flex flex-col items-center gap-2 pb-3">
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setProfileOpen((v) => !v);
+                }}
+                className="p-1.5 rounded-full hover:bg-neutral-50"
+                aria-label="Account"
+                title={user.displayName || "Account"}
+              >
+                <img
+                  src={user.photoURL || "/avatar-placeholder.png"}
+                  alt={user.displayName || "User"}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              </button>
+              {profileOpen && (
+                <div
+                  role="menu"
+                  className="absolute bottom-12 left-1/2 -translate-x-1/2 z-50 rounded-md border border-neutral-200 bg-white shadow-md py-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className="w-full px-3 py-1.5 text-left text-sm text-neutral-800 hover:bg-neutral-50"
+                    onClick={async () => {
+                      try {
+                        await logOut?.();
+                      } finally {
+                        setProfileOpen(false);
+                      }
+                    }}
+                    role="menuitem"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={async () => {
+                try {
+                  await googleSignIn?.();
+                } catch (e) {}
+              }}
+              className="p-2 rounded-md hover:bg-neutral-50"
+              aria-label="Sign in with Google"
+              title="Sign in with Google"
+            >
+              <img
+                src="/Google__G__logo.svg.png"
+                alt="Google"
+                className="h-5 w-5"
+              />
+            </button>
+          )}
+        </div>
+      </aside>
     );
   }
 
@@ -162,30 +289,62 @@ export default function MyBoardsSidebar({
       className="relative z-30 w-64 max-w-[320px] h-full min-h-0 border-r border-neutral-200 bg-white flex flex-col"
       aria-label="My Boards"
     >
+      {/* Branding & About link */}
+      <div className="px-3 pt-3 pb-2 border-b border-neutral-200 bg-white">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2"
+            aria-label="Curiosity Home"
+          >
+            <img
+              src="/textblack.png"
+              alt="Curiosity-edu"
+              className="h-9 w-auto"
+            />
+          </Link>
+          <button
+            onClick={() => setOpen(false)}
+            className="p-2 rounded-md hover:bg-neutral-50"
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
+          >
+            <img src="/window.svg" alt="Collapse" className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="mt-2">
+          <Link
+            href="/about"
+            className="inline-flex items-center gap-2 text-sm text-neutral-700 hover:text-neutral-900"
+          >
+            <img src="/globe.svg" alt="About" className="h-4 w-4" />
+            <span>About Us</span>
+          </Link>
+        </div>
+      </div>
       <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 bg-neutral-50">
         <div className="text-sm font-semibold text-neutral-700 select-none">
           My Boards
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/boards/new"
-            className="px-2 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800"
-          >
-            New
-          </Link>
-          <button
-            onClick={() => setOpen(false)}
-            className="p-1.5 text-xl text-neutral-500 hover:text-neutral-800"
-            aria-label="Hide Boards"
-            title="Hide Boards"
-          >
-            {"<"}
-          </button>
+          {user && (
+            <Link
+              href="/boards/new"
+              className="inline-flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800"
+            >
+              <img src="/file.svg" alt="New" className="h-4 w-4" />
+              <span>New Board</span>
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {loading ? (
           <div className="text-xs text-neutral-500 px-2 py-2">Loading…</div>
+        ) : !user ? (
+          <div className="text-xs text-neutral-500 px-2 py-2">
+            Sign in to create new boards.
+          </div>
         ) : boards.length === 0 ? (
           <div className="text-xs text-neutral-500 px-2 py-2">
             No boards yet.
@@ -273,6 +432,74 @@ export default function MyBoardsSidebar({
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      {/* Profile footer */}
+      <div className="mt-auto border-t border-neutral-200 p-2">
+        {user ? (
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setProfileOpen((v) => !v);
+              }}
+              className="w-full flex items-center gap-2 rounded-md px-2 py-2 hover:bg-neutral-50"
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+            >
+              <img
+                src={user.photoURL || "/avatar-placeholder.png"}
+                alt={user.displayName || "User"}
+                className="h-7 w-7 rounded-full object-cover"
+              />
+              <div className="min-w-0 flex-1 text-left">
+                <div className="truncate text-sm text-neutral-900">
+                  {user.displayName || "User"}
+                </div>
+                <div className="text-[11px] text-neutral-500 truncate">
+                  {user.email || ""}
+                </div>
+              </div>
+            </button>
+            {profileOpen && (
+              <div
+                role="menu"
+                className="absolute left-2 right-2 bottom-12 z-50 rounded-md border border-neutral-200 bg-white shadow-md py-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full px-3 py-1.5 text-left text-sm text-neutral-800 hover:bg-neutral-50"
+                  onClick={async () => {
+                    try {
+                      await logOut?.();
+                    } finally {
+                      setProfileOpen(false);
+                    }
+                  }}
+                  role="menuitem"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={async () => {
+              try {
+                await googleSignIn?.();
+              } catch (e) {}
+            }}
+            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800"
+          >
+            <img
+              src="/Google__G__logo.svg.png"
+              alt="Google"
+              className="h-4 w-4"
+            />
+            <span>Sign in with Google</span>
+          </button>
         )}
       </div>
     </aside>
