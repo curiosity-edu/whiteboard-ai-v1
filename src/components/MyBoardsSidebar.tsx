@@ -4,6 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserAuth } from "@/context/AuthContext";
+import { TbLayoutSidebarLeftCollapseFilled } from "react-icons/tb";
+import { FcAbout } from "react-icons/fc";
+import { IoIosCreate } from "react-icons/io";
 
 export default function MyBoardsSidebar({
   currentBoardId,
@@ -195,7 +198,7 @@ export default function MyBoardsSidebar({
             aria-label="About Us"
             title="About Us"
           >
-            <img src="/globe.svg" alt="About" className="h-5 w-5" />
+            <FcAbout className="h-5 w-5" />
           </Link>
           {user ? (
             <Link
@@ -204,7 +207,7 @@ export default function MyBoardsSidebar({
               aria-label="New Board"
               title="New Board"
             >
-              <img src="/file.svg" alt="New" className="h-5 w-5" />
+              <IoIosCreate className="h-5 w-5" />
             </Link>
           ) : (
             <button
@@ -217,7 +220,7 @@ export default function MyBoardsSidebar({
               aria-label="Sign in to create board"
               title="Sign in"
             >
-              <img src="/file.svg" alt="New" className="h-5 w-5 opacity-60" />
+              <IoIosCreate className="h-5 w-5 opacity-60" />
             </button>
           )}
         </div>
@@ -309,7 +312,7 @@ export default function MyBoardsSidebar({
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >
-            <img src="/window.svg" alt="Collapse" className="h-5 w-5" />
+            <TbLayoutSidebarLeftCollapseFilled className="h-5 w-5" />
           </button>
         </div>
         <div className="mt-2">
@@ -317,7 +320,7 @@ export default function MyBoardsSidebar({
             href="/about"
             className="inline-flex items-center gap-2 text-sm text-neutral-700 hover:text-neutral-900"
           >
-            <img src="/globe.svg" alt="About" className="h-4 w-4" />
+            <FcAbout className="h-4 w-4" />
             <span>About Us</span>
           </Link>
         </div>
@@ -332,7 +335,7 @@ export default function MyBoardsSidebar({
               href="/boards/new"
               className="inline-flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800"
             >
-              <img src="/file.svg" alt="New" className="h-4 w-4" />
+              <IoIosCreate className="h-4 w-4" />
               <span>New Board</span>
             </Link>
           )}

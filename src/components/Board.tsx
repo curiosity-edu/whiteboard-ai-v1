@@ -4,6 +4,8 @@ import * as React from "react";
 import { Tldraw, toRichText, TLTextShape, TLShapeId, Editor } from "tldraw";
 import "tldraw/tldraw.css";
 import MyBoardsSidebar from "@/components/MyBoardsSidebar";
+import { TbLayoutSidebarRightCollapseFilled } from "react-icons/tb";
+import { IoIosSettings } from "react-icons/io";
 
 /**
  * Board component that provides a collaborative whiteboard with AI integration.
@@ -467,7 +469,7 @@ export default function Board({ boardId }: { boardId: string }) {
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
               >
-                <img src="/window.svg" alt="Collapse" className="h-5 w-5" />
+                <TbLayoutSidebarRightCollapseFilled className="h-5 w-5" />
               </button>
               <div
                 className="relative"
@@ -479,12 +481,12 @@ export default function Board({ boardId }: { boardId: string }) {
                     e.stopPropagation();
                     setSettingsOpen((v) => !v);
                   }}
-                  className="p-1.5 text-2xl text-neutral-500 hover:text-neutral-800"
+                  className="p-1.5 text-neutral-500 hover:text-neutral-800"
                   title="Settings"
                   aria-haspopup="menu"
                   aria-expanded={settingsOpen}
                 >
-                  ⚙️
+                  <IoIosSettings className="h-5 w-5" />
                 </button>
                 {settingsOpen && (
                   <div

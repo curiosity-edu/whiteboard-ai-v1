@@ -5,7 +5,7 @@ const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 
 export default function AboutPage() {
   return (
-    <div className="bg-white min-h-screen w-full">
+    <div className="bg-white h-screen w-full overflow-y-auto">
       <div className="mx-auto max-w-3xl px-4 py-6 text-neutral-900 bg-white">
         <div className="mb-4">
           <Link

@@ -97,11 +97,10 @@ Return ONLY JSON with the keys described above.
 ### 0. Landing and Navigation
 
 - User lands at `GET /` → a new board is created via `POST /api/boards`, and the user is redirected to `/board/[id]` to see a blank whiteboard immediately.
-- Top-right of the nav shows authentication controls:
-  - Logged out: "Sign in with Google".
-  - Logged in: "Hello [FirstName] • Sign out".
-- The My Boards history now lives as a collapsible left sidebar on the board view.
-- The `/boards` route exists only to redirect to the most recent board (or `/` if none). The header no longer shows a "My Boards" link.
+- Navigation is minimal. The app surfaces an "About Us" link (icon-only in the collapsed sidebar; text + icon in the expanded sidebar).
+- Authentication controls live in the left sidebar footer, not in a top header. In collapsed mode, a round avatar/sign‑in button appears at the bottom.
+- The My Boards history lives as a collapsible left sidebar on the board view.
+- The `/boards` route exists only to redirect to the most recent board (or `/` if none). There is no separate My Boards page in the header.
 
 ### 1. Board View (`/board/[id]`)
 
@@ -138,10 +137,8 @@ Return ONLY JSON with the keys described above.
 ### 4. Authentication
 
 - **Provider/Context**: `src/context/AuthContext.js` (Client Component) exposes `[user, googleSignIn, logOut]` using Firebase Auth.
-- **UI Controls**: `src/components/AuthControls.tsx` (Client) renders in the header:
-  - Logged out: "Sign in with Google".
-  - Logged in: greeting + "Sign out".
-- **Nav behavior**: `src/components/Nav.tsx` shows only static links (e.g., About). The My Boards entry has been removed (now a sidebar on the board).
+- **UI Location**: Authentication controls are rendered in the left sidebar footer (not a top nav bar). In collapsed mode, a compact avatar/sign-in button appears at the bottom.
+- **Navigation**: The app uses minimal navigation. An "About Us" link is available via the sidebar (icon-only when collapsed; icon + text when expanded).
 - **Firebase config**: `src/lib/firebase.ts` initializes app/auth/storage/firestore. Analytics is guarded with `typeof window !== "undefined"` to avoid SSR errors.
 
 ### 5. Client Update (Board)
@@ -164,27 +161,27 @@ Return ONLY JSON with the keys described above.
 
 ## Styling & UX Notes
 
-- **Header**: Sticky, solid white (`bg-white`), logo left, About link, and auth controls.
-- **My Boards Sidebar**: Collapsible left sidebar, shown for signed-in users on the board page.
-  - Toggle persists in `localStorage` under `boardsOpen`.
-  - Hover over a board to reveal a trash icon. Clicking prompts a non-recoverable delete confirmation, then calls `DELETE /api/boards/[id]` and updates the UI.
-- **Layout**: Full-height app with internal scrolling in side panels; canvas uses `absolute inset-0` inside a `min-h-0` flex layout.
+- **Global layout**: The root layout pins the app to the viewport (fixed `main` covering the screen). Scrolling happens inside panels.
+- **My Boards Sidebar**: Collapsible left sidebar (persists in `localStorage` under `boardsOpen`).
+  - Collapse/expand uses `TbLayoutSidebarLeftCollapseFilled`.
+  - "About Us" uses `FcAbout`.
+  - "New Board" uses `IoIosCreate`.
+  - Hover over a board to reveal delete; confirmation precedes `DELETE /api/boards/[id]`.
+- **Canvas/Layout**: TLDraw canvas fills available space via `absolute inset-0` within a `min-h-0` flex container.
 - **AI Panel**: Collapsible right panel with Ask AI, Settings (Add to Canvas, History), and Voice controls.
-  - Toggle persists in `localStorage` under `aiOpen`.
-  - History overlay is an in-panel full overlay.
-- **About page**: Full-width white background; content constrained to a readable column.
+  - Collapse uses `TbLayoutSidebarRightCollapseFilled`.
+  - Settings button uses `IoIosSettings`.
+  - Toggle persists in `localStorage` under `aiOpen`. History is an in-panel overlay.
+- **About page**: Scrollable within the fixed layout by using a viewport-height container (`h-screen`) with `overflow-y: auto`; content is a centered readable column.
 
 ## Source Files Overview
 
-- `src/app/layout.tsx` — Global layout (header with logo + `Nav`, sticky header, full-bleed underline, white background scaffolding).
+- `src/app/layout.tsx` — Global layout with a fixed main viewport and white background scaffolding; content panes scroll internally.
 - `src/app/page.tsx` — Creates a new board and redirects `/` to `/board/[id]`.
-- `src/components/AuthControls.tsx` — Client auth UI in header (Sign in with Google / Hello [name] / Sign out).
 - `src/context/AuthContext.js` — Client auth context exposing `[user, googleSignIn, logOut]`.
 - `src/app/boards/page.tsx` — Redirects to the most recent board (or `/` if none). No separate My Boards UI.
 - `src/components/MyBoardsSidebar.tsx` — Client sidebar listing boards, hover-delete with confirmation, navigation, and open-state persistence.
-- `src/components/Nav.tsx` — Client nav (About link only); My Boards link removed.
 - `src/app/board/[id]/page.tsx` — Server page that renders `<Board boardId={id} />`.
-- `src/components/Nav.tsx` — Client nav with active highlighting for `/boards` and `/board/*`, plus link to `/about`.
 - `src/components/Board.tsx` — Client TLDraw board + AI Panel. Sends `boardId` to `/api/solve`, shows responses, optional canvas insertion, and board History overlay.
 - `src/app/api/boards/route.ts` — `GET` list boards; `POST` create board (migrates legacy `sessions` → `boards`).
 - `src/app/api/boards/[id]/route.ts` — `GET` a single board (id, title, items). `DELETE` to remove a board.
@@ -192,7 +189,7 @@ Return ONLY JSON with the keys described above.
 - `src/app/api/history/route.ts` — Legacy sessions endpoint (kept temporarily; UI no longer calls it).
 - `src/app/globals.css` — Tailwind setup and theme tokens. Forces light background to avoid dark strips; sets body text color.
 - `src/lib/firebase.ts` — Centralized Firebase initialization and exports (auth, storage, firestore, analytics guarded for SSR).
-- `public/textblack.png` — Logo used in the header and About page.
+- `public/textblack.png` — Logo used in the left sidebar and About page.
 
 ## Development Tips
 
@@ -217,14 +214,13 @@ Return ONLY JSON with the keys described above.
 
 ### Deadline for Functionality Items: 12/14/2025
 
-#### UI Related Tasks:
+#### Winter Break:
 
-- AI Panel doesn't need to go all the way down (too much screen estate)
-- Stack alerts like WhatsApp messages
-- Write-out animation on whiteboard
-- Ask AI should be bigger and more colorful
-
-#### Deadline for UI Items: End of break
+- Buffer to complete unfinished functionality items
+- Polish up UI/UX based on feedback
+- Comprehensively understand codebase
+- Prepare for deployment
+- Test all features thoroughly
 
 #### Deployment:
 
