@@ -1,4 +1,4 @@
-// src/app/api/boards/[id]/route.ts
+// src/app/api/boards/[id]/doc/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
@@ -42,46 +42,38 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
   const shape = await readStore();
   const boards = toBoards(shape);
   const b = boards.find((x) => x.id === id);
-  if (!b) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ id: b.id, title: b.title, createdAt: b.createdAt, updatedAt: b.updatedAt, items: b.items ?? [] });
+  if (!b) return NextResponse.json({ doc: null, updatedAt: 0 });
+  return NextResponse.json({ doc: b.doc ?? null, updatedAt: b.updatedAt });
 }
 
-export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-  const shape = await readStore();
-  const boards = toBoards(shape);
-  const next = boards.filter((b) => b.id !== id);
-  if (next.length === boards.length) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  await writeStore({ boards: next });
-  return new NextResponse(null, { status: 204 });
-}
-
-export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
   let body: any = {};
   try {
     body = await req.json();
   } catch {}
-  const t = (body?.title ?? "").toString().trim();
-  if (!t) {
-    return NextResponse.json({ error: "Title is required." }, { status: 400 });
+  if (!Object.prototype.hasOwnProperty.call(body, "doc")) {
+    return NextResponse.json({ error: "Missing doc" }, { status: 400 });
   }
   const shape = await readStore();
   const boards = toBoards(shape);
   const idx = boards.findIndex((b) => b.id === id);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const now = Date.now();
-  const updated: Board = { ...boards[idx], title: t, updatedAt: now };
-  const next = boards.slice();
-  next[idx] = updated;
-  try {
-    await writeStore({ boards: next });
-  } catch (e) {
-    console.error("[Boards] writeStore failed during PATCH, continuing without persistence:", e);
+  let nextBoards = boards.slice();
+  let updated: Board;
+  if (idx === -1) {
+    // Upsert a new board if it doesn't exist yet
+    updated = { id, title: "Untitled", createdAt: now, updatedAt: now, items: [], doc: body.doc };
+    nextBoards = [updated, ...nextBoards];
+  } else {
+    updated = { ...boards[idx], doc: body.doc, updatedAt: now };
+    nextBoards[idx] = updated;
   }
-  return NextResponse.json({ id: updated.id, title: updated.title, createdAt: updated.createdAt, updatedAt: updated.updatedAt });
+  try {
+    await writeStore({ boards: nextBoards });
+  } catch (e) {
+    console.error("[Boards] writeStore failed during PUT /doc:", e);
+  }
+  return NextResponse.json({ ok: true, updatedAt: updated.updatedAt });
 }

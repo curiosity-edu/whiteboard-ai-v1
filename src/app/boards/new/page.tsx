@@ -39,7 +39,9 @@ export default function NewBoardPage() {
   return (
     <main className="h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-white">
       <div className="mx-auto max-w-md h-full flex flex-col p-6">
-        <h1 className="text-xl font-semibold text-neutral-900 mb-4">New Board</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 mb-4">
+          New Board
+        </h1>
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
             <label className="block text-sm text-neutral-700 mb-1">Title</label>

@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Tldraw, toRichText, TLTextShape, TLShapeId, Editor } from "tldraw";
+import {
+  Tldraw,
+  toRichText,
+  TLTextShape,
+  TLShapeId,
+  Editor,
+  getSnapshot,
+  loadSnapshot,
+} from "tldraw";
 import "tldraw/tldraw.css";
 import MyBoardsSidebar from "@/components/MyBoardsSidebar";
 import { TbLayoutSidebarRightCollapseFilled } from "react-icons/tb";
@@ -38,6 +46,10 @@ export default function Board({ boardId }: { boardId: string }) {
   const interimRef = React.useRef<string>("");
   const keepListeningRef = React.useRef<boolean>(false);
   const [isRecording, setIsRecording] = React.useState(false);
+  // Autosave helpers
+  const saveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isLoadingDocRef = React.useRef<boolean>(false);
+  const [editorReady, setEditorReady] = React.useState(false);
 
   // Whether to add AI responses to the canvas as a text shape
   const [addToCanvas, setAddToCanvas] = React.useState<boolean>(() => {
@@ -134,7 +146,73 @@ export default function Board({ boardId }: { boardId: string }) {
       editor.updateInstanceState({ isReadonly: false });
     } catch {}
     console.log("[Board] Editor mounted:", editor);
+    // Load persisted TLDraw snapshot for this board
+    (async () => {
+      if (!boardId) return;
+      try {
+        isLoadingDocRef.current = true;
+        const rsp = await fetch(
+          `/api/boards/${encodeURIComponent(boardId)}/doc`,
+          { cache: "no-store" }
+        );
+        if (rsp.ok) {
+          const j = await rsp.json();
+          if (j?.doc) {
+            try {
+              // loadSnapshot expects a store
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              loadSnapshot((editor as any).store, j.doc);
+              console.log("[Board] Loaded snapshot for", boardId);
+            } catch (e) {
+              console.warn("[Board] Failed to load snapshot:", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[Board] load doc failed:", e);
+      } finally {
+        isLoadingDocRef.current = false;
+        setEditorReady(true);
+      }
+    })();
   }, []);
+
+  // Debounced autosave when the TLDraw store changes
+  React.useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || !boardId) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store: any = (editor as any).store;
+    const unlisten =
+      store?.listen?.(() => {
+        if (isLoadingDocRef.current) return;
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(async () => {
+          try {
+            const snap = getSnapshot(store);
+            console.log("[Board] autosave -> PUT /doc", {
+              boardId,
+              ts: Date.now(),
+            });
+            await fetch(`/api/boards/${encodeURIComponent(boardId)}/doc`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ doc: snap }),
+            });
+          } catch (e) {
+            console.warn("[Board] autosave failed:", e);
+          }
+        }, 800);
+      }) || (() => {});
+    return () => {
+      try {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      } catch {}
+      try {
+        unlisten();
+      } catch {}
+    };
+  }, [boardId, editorReady]);
 
   function addResponseToCanvas(text: string) {
     const editor = editorRef.current;

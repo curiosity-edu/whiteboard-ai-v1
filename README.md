@@ -36,7 +36,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Data Model
 
 - File: `data/solve_history.json`
-- Shape: Boards (no nested sessions). Each board is a single conversation timeline.
+- Shape: Boards. Each board is a single conversation timeline.
 
 ```jsonc
 {
@@ -59,7 +59,6 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 }
 ```
 
-- Migration: legacy `{"sessions": [...]}` is treated as `boards` for backward compatibility in the API.
 
 ## Prompting Rules
 
