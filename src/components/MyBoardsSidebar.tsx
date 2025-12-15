@@ -461,7 +461,7 @@ export default function MyBoardsSidebar({
                   )}
                   <div className="text-[11px] text-neutral-500">
                     {new Date(b.updatedAt).toLocaleString()} • {b.count}{" "}
-                    question
+                    probe
                     {b.count === 1 ? "" : "s"}
                   </div>
                 </button>
@@ -565,6 +565,7 @@ export default function MyBoardsSidebar({
             onClick={async () => {
               try {
                 await googleSignIn?.();
+                router.push("/");
               } catch (e) {}
             }}
             className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800"

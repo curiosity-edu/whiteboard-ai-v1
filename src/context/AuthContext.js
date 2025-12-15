@@ -11,11 +11,11 @@ export const AuthContextProvider = ({ children }) => {
 
     const googleSignIn = () => {
         const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider);
+        return signInWithPopup(auth, provider);
     }
 
     const logOut = () => {
-        signOut(auth);  
+        return signOut(auth);  
     }
 
     useEffect(() => {
