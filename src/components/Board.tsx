@@ -58,6 +58,17 @@ export default function Board({ boardId }: { boardId: string }) {
   const ctx = (UserAuth() as any) || [];
   const user = ctx[0];
 
+  // When a user signs out, reset transient UI state so the anonymous session
+  // starts blank (without affecting the signed-in Firestore persisted data).
+  React.useEffect(() => {
+    if (user) return;
+    setAiItems([]);
+    setHistoryOpen(false);
+    setArchive(null);
+    setBoardItems([]);
+    stopVoiceInput();
+  }, [user]);
+
   // Whether to add AI responses to the canvas as a text shape
   const [addToCanvas, setAddToCanvas] = React.useState<boolean>(() => {
     try {
@@ -544,7 +555,10 @@ export default function Board({ boardId }: { boardId: string }) {
         <div className="absolute inset-0 bg-white">
           <Tldraw
             onMount={onMount}
-            persistenceKey={`board:${boardId || "default"}`}
+            key={`${user ? user.uid : "anon"}:${boardId || "default"}`}
+            persistenceKey={`board:${user ? user.uid : "anon"}:${
+              boardId || "default"
+            }`}
             autoFocus
           />
         </div>

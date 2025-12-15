@@ -25,7 +25,9 @@ export default function AuthControls() {
   async function onSignOut() {
     try {
       await logOut?.();
-      // After sign-out, keep user on current page
+      // After sign-out, go to root; it will redirect to a fresh local board
+      if (pathname !== "/") router.push("/");
+      else router.refresh();
     } catch (e) {
       console.error("Sign-out failed", e);
     }

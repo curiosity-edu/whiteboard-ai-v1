@@ -491,6 +491,7 @@ export default function MyBoardsSidebar({
                   onClick={async () => {
                     try {
                       await logOut?.();
+                      router.push("/");
                     } finally {
                       setProfileOpen(false);
                     }
